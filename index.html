@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#18232d"><link rel="manifest" href="manifest.json">
+<title>Stock de Tintas</title>
+<style>
+:root{--bg:#f4f5f7;--card:#fff;--text:#17202a;--muted:#68737d;--accent:#e56b2f;--line:#e2e5e8;--ok:#218739;--danger:#c93030}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--text)}
+header{background:#18232d;color:white;padding:18px 16px 14px;position:sticky;top:0;z-index:10}
+header h1{font-size:21px;margin:0 0 4px} header p{margin:0;color:#cbd2d8;font-size:13px}
+nav{display:flex;gap:8px;overflow:auto;padding:10px;background:white;border-bottom:1px solid var(--line);position:sticky;top:73px;z-index:9}
+nav button{border:0;background:#eef1f3;border-radius:10px;padding:10px 14px;white-space:nowrap;font-weight:600;color:#334}
+nav button.active{background:var(--accent);color:white}
+main{max-width:900px;margin:auto;padding:14px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:15px;box-shadow:0 1px 2px #00000008}
+.kpi{font-size:28px;font-weight:800}.muted{color:var(--muted);font-size:13px}
+button.primary{background:var(--accent);color:#fff;border:0;border-radius:10px;padding:11px 14px;font-weight:700}
+button.secondary{background:#eef1f3;border:0;border-radius:10px;padding:10px 13px;font-weight:600}
+button.danger{background:#fff0f0;color:var(--danger);border:1px solid #ffd0d0;border-radius:10px;padding:9px 12px}
+input,select{width:100%;padding:12px;border:1px solid #ccd2d7;border-radius:10px;background:white;font-size:15px}
+label{display:block;font-size:13px;font-weight:700;margin:10px 0 5px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.row>*{flex:1}
+.search{margin-bottom:12px}.list{display:grid;gap:9px}.item{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px}
+.badge{display:inline-block;padding:4px 7px;border-radius:999px;font-size:11px;font-weight:800;background:#edf2f5}.low{background:#fff0d7;color:#8b5200}.zero{background:#ffe5e5;color:#a00}
+.map{display:grid;grid-template-columns:1fr 80px 1fr;gap:10px;align-items:stretch}
+.aisle{background:#e9edf0;border-radius:12px;min-height:360px;display:flex;align-items:center;justify-content:center;color:#5d6973;font-weight:800;writing-mode:vertical-rl;transform:rotate(180deg)}
+.side{display:grid;gap:8px}
+.rack{background:#fff;border:2px solid #d47a49;border-radius:10px;padding:9px;min-height:86px}
+.rack h3{margin:0 0 6px;font-size:13px}.slots{display:flex;gap:5px;flex-wrap:wrap}.slot{width:24px;height:24px;border-radius:5px;background:#e9edf0;font-size:9px;display:flex;align-items:center;justify-content:center}
+.slot.filled{background:#e9f4eb;color:#17652b;font-weight:800}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:9px 6px;border-bottom:1px solid var(--line);text-align:left}th{color:var(--muted)}
+.hidden{display:none}.empty{text-align:center;padding:25px;color:var(--muted)}
+footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
+@media(max-width:600px){main{padding:10px}.map{grid-template-columns:1fr 46px 1fr}.rack{padding:7px}.slot{width:20px;height:20px}.kpi{font-size:24px}}
+.mapgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}.maparea{background:#f8fafb;border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:10px}.maparea h3{margin:0 0 3px;font-size:15px}.maprow{display:flex;gap:7px;align-items:center;margin-top:7px}.maprow>b{width:28px;font-size:11px}.maprow .slots{flex:1;display:flex;gap:4px;flex-wrap:wrap}.slot{border:0;width:24px;height:24px;border-radius:5px;background:#e9edf0;font-size:9px;display:flex;align-items:center;justify-content:center}.slot.filled{background:#dcefe0;color:#17652b;font-weight:800}.mapsummary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}.mapsummary>div{background:#f7f8fa;border:1px solid var(--line);border-radius:10px;padding:11px;font-size:13px;line-height:1.6}@media(max-width:700px){.mapgrid,.mapsummary{grid-template-columns:1fr}.maprow .slots{overflow:auto;flex-wrap:nowrap;padding-bottom:3px}.slot{flex:0 0 22px}} </style>
+</head>
+<body>
+<header><h1>📦 Stock de Tintas</h1><p>Localização por corredor · lado · rack · nível · posição</p></header>
+<nav id="nav">
+<button data-tab="inicio" class="active">Início</button>
+<button data-tab="mapa">Mapa</button>
+<button data-tab="produtos">Tintas</button>
+<button data-tab="mov">Movimentos</button>
+<button data-tab="config">Configuração</button>
+</nav>
+<main>
+<section id="inicio">
+<div class="card"><label>🔎 Procurar tinta</label><input id="quickSearch" placeholder="Código, descrição, RAL, lote..." oninput="renderHome()"></div>
+<div class="grid" style="margin-top:12px">
+<div class="card"><div class="muted">Caixas em stock</div><div class="kpi" id="kpiQty">0</div></div>
+<div class="card"><div class="muted">Produtos cadastrados</div><div class="kpi" id="kpiProd">0</div></div>
+<div class="card"><div class="muted">Locais ocupados</div><div class="kpi" id="kpiLoc">0</div></div>
+<div class="card"><div class="muted">Stock baixo</div><div class="kpi" id="kpiLow">0</div></div>
+</div>
+<div class="card" style="margin-top:12px"><h2 style="font-size:17px">Resultado</h2><div id="homeResults" class="list"></div></div>
+</section>
+
+<section id="mapa" class="hidden"><div class="card"><h2 style="font-size:18px;margin-top:0">Mapa do estoque · 420 posições</h2><p class="muted">Cada quadrado é uma posição física. Verde = posição com tinta. Toque numa posição para consultar o conteúdo.</p><div class="mapsummary"><div><b>Corredor 1</b><br>Esq. 84 · Dir. 132</div><div><b>Corredor 2</b><br>Esq. 84 · Dir. 84</div><div><b>Fundo</b><br>36 posições</div></div><h3>Corredor 1</h3><div class="mapgrid"><div id="mapC1E"></div><div id="mapC1D"></div></div><h3>Corredor 2</h3><div class="mapgrid"><div id="mapC2E"></div><div id="mapC2D"></div></div><h3>Fundo do corredor</h3><div id="mapF"></div><div class="card" style="margin-top:12px;background:#f8f9fa"><b>Exemplo:</b> C1-D-N04-P17 = Corredor 1 · Direita · Nível 04 · Posição 17.</div></div></section>
+
+<section id="produtos" class="hidden">
+<div class="card"><h2 style="font-size:18px;margin-top:0">Cadastrar / editar tinta</h2>
+<input type="hidden" id="editId">
+<label>Descrição da tinta</label><input id="pName" placeholder="Ex.: Interpon 600 RAL 9010">
+<div class="row"><div><label>Código</label><input id="pCode" placeholder="Código do produto"></div><div><label>Lote</label><input id="pLot" placeholder="Lote"></div></div>
+<div class="row"><div><label>Quantidade (caixas)</label><input id="pQty" type="number" min="0" value="1"></div><div><label>Local</label><select id="pLoc"></select></div></div>
+<div class="row" style="margin-top:12px"><button class="primary" onclick="saveProduct()">Guardar tinta</button><button class="secondary" onclick="clearForm()">Limpar</button></div>
+</div>
+<div class="card" style="margin-top:12px"><label>🔎 Filtrar</label><input id="prodSearch" oninput="renderProducts()" placeholder="Pesquisar..."><div id="productList" class="list" style="margin-top:10px"></div></div>
+</section>
+
+<section id="mov" class="hidden">
+<div class="card"><h2 style="font-size:18px;margin-top:0">Movimentar stock</h2>
+<label>Tinta</label><select id="mProd"></select>
+<div class="row"><div><label>Operação</label><select id="mType"><option value="in">Entrada</option><option value="out">Saída</option><option value="move">Transferência</option></select></div><div><label>Quantidade</label><input id="mQty" type="number" min="1" value="1"></div></div>
+<div id="moveToWrap" class="hidden"><label>Novo local</label><select id="mTo"></select></div>
+<button class="primary" style="margin-top:12px;width:100%" onclick="doMovement()">Registar movimento</button>
+</div>
+<div class="card" style="margin-top:12px"><h2 style="font-size:17px;margin-top:0">Histórico</h2><div id="history"></div></div>
+</section>
+
+<section id="config" class="hidden"><div class="card"><h2 style="font-size:18px;margin-top:0">Estrutura do estoque</h2><table><tr><th>Área</th><th>Níveis</th><th>Posições/nível</th><th>Total</th></tr><tr><td>C1 · Esquerda</td><td>6</td><td>14</td><td>84</td></tr><tr><td>C1 · Direita</td><td>6</td><td>22</td><td>132</td></tr><tr><td>C2 · Esquerda</td><td>6</td><td>14</td><td>84</td></tr><tr><td>C2 · Direita</td><td>6</td><td>14</td><td>84</td></tr><tr><td>Fundo</td><td>6</td><td>6</td><td>36</td></tr><tr><th colspan="3">TOTAL</th><th>420</th></tr></table><button class="primary" style="margin-top:12px" onclick="rebuildLocations()">Aplicar mapa de 420 posições</button></div><div class="card" style="margin-top:12px"><b>Backup</b><p class="muted">Exporte uma cópia do estoque para segurança.</p><div class="row"><button class="secondary" onclick="exportData()">Exportar backup</button><button class="secondary" onclick="importData()">Importar backup</button><button class="danger" onclick="resetAll()">Apagar dados</button></div></div></section>
+</main><footer>Protótipo local · dados guardados no dispositivo</footer>
+
+<script>
+const KEY='stockTintasV1';
+let db=JSON.parse(localStorage.getItem(KEY)||'null')||{locations:[],products:[],history:[],settings:{levels:6,layouts:{'C1-E':14,'C1-D':22,'C2-E':14,'C2-D':14,'F':6}}};
+function save(){localStorage.setItem(KEY,JSON.stringify(db))}
+function buildLocs(){let a=[];const L=db.settings.layouts||{'C1-E':14,'C1-D':22,'C2-E':14,'C2-D':14,'F':6};for(const key of Object.keys(L)){const count=L[key];if(key==='F'){for(let n=1;n<=6;n++)for(let p=1;p<=count;p++)a.push({id:`F-N${String(n).padStart(2,'0')}-P${String(p).padStart(2,'0')}`})}else{const [c,side]=key.split('-');for(let n=1;n<=6;n++)for(let p=1;p<=count;p++)a.push({id:`${c}-${side}-N${String(n).padStart(2,'0')}-P${String(p).padStart(2,'0')}`})}}return a}
+if(!db.locations.length||db.locations.length!==420){db.locations=buildLocs();save()}
+function locLabel(id){return id||'Sem localização'}
+function populateLocs(){
+ const opts=db.locations.map(x=>`<option value="${x.id}">${x.id}</option>`).join('');
+ document.querySelector('#pLoc').innerHTML='<option value="">Sem localização</option>'+opts;
+ document.querySelector('#mTo').innerHTML=opts;
+}
+function nav(){
+ document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('main section').forEach(s=>s.classList.add('hidden'));document.getElementById(b.dataset.tab).classList.remove('hidden');renderAll()})
+}
+function renderHome(){
+ const q=(document.querySelector('#quickSearch').value||'').toLowerCase();
+ const ps=db.products.filter(p=>[p.name,p.code,p.lot,p.location].join(' ').toLowerCase().includes(q));
+ document.querySelector('#kpiQty').textContent=db.products.reduce((a,p)=>a+Number(p.qty||0),0);
+ document.querySelector('#kpiProd').textContent=db.products.length;
+ document.querySelector('#kpiLoc').textContent=new Set(db.products.filter(p=>p.location&&p.qty>0).map(p=>p.location)).size;
+ document.querySelector('#kpiLow').textContent=db.products.filter(p=>p.qty>0&&p.qty<=2).length;
+ document.querySelector('#homeResults').innerHTML=ps.length?ps.slice(0,30).map(cardProduct).join(''):'<div class="empty">Nenhuma tinta encontrada.</div>';
+}
+function cardProduct(p){
+ let badge=p.qty==0?'<span class="badge zero">SEM STOCK</span>':p.qty<=2?'<span class="badge low">STOCK BAIXO</span>':'<span class="badge">OK</span>';
+ return `<div class="item"><b>${esc(p.name)}</b> ${badge}<div class="muted">Código: ${esc(p.code||'-')} · Lote: ${esc(p.lot||'-')}</div><div style="margin-top:6px"><b>${p.qty}</b> caixa(s) · 📍 <b>${esc(locLabel(p.location))}</b></div></div>`;
+}
+function renderProducts(){
+ const q=(document.querySelector('#prodSearch').value||'').toLowerCase();
+ const ps=db.products.filter(p=>[p.name,p.code,p.lot,p.location].join(' ').toLowerCase().includes(q));
+ document.querySelector('#productList').innerHTML=ps.length?ps.map(p=>`<div class="item">${cardProduct(p)}<div class="row" style="margin-top:8px"><button class="secondary" onclick="editProduct('${p.id}')">Editar</button><button class="danger" onclick="deleteProduct('${p.id}')">Apagar</button></div></div>`).join(''):'<div class="empty">Nenhum produto cadastrado.</div>';
+}
+function saveProduct(){
+ const id=document.querySelector('#editId').value||crypto.randomUUID();
+ const p={id,name:document.querySelector('#pName').value.trim(),code:document.querySelector('#pCode').value.trim(),lot:document.querySelector('#pLot').value.trim(),qty:Math.max(0,Number(document.querySelector('#pQty').value||0)),location:document.querySelector('#pLoc').value};
+ if(!p.name){alert('Informe a descrição da tinta.');return}
+ const i=db.products.findIndex(x=>x.id===id); if(i>=0) db.products[i]=p; else db.products.push(p);
+ db.history.unshift({date:new Date().toLocaleString('pt-PT'),type:i>=0?'Edição':'Cadastro',product:p.name,qty:p.qty,from:'',to:p.location});
+ save();clearForm();renderAll();alert('Tinta guardada.');
+}
+function editProduct(id){let p=db.products.find(x=>x.id===id);if(!p)return;document.querySelector('#editId').value=p.id;document.querySelector('#pName').value=p.name;document.querySelector('#pCode').value=p.code;document.querySelector('#pLot').value=p.lot;document.querySelector('#pQty').value=p.qty;document.querySelector('#pLoc').value=p.location||'';scrollTo(0,0)}
+function deleteProduct(id){if(!confirm('Apagar esta tinta?'))return;db.products=db.products.filter(x=>x.id!==id);save();renderAll()}
+function clearForm(){['editId','pName','pCode','pLot'].forEach(id=>document.getElementById(id).value='');document.getElementById('pQty').value=1;document.getElementById('pLoc').value=''}
+function doMovement(){
+ const p=db.products.find(x=>x.id===document.querySelector('#mProd').value);if(!p)return;
+ const type=document.querySelector('#mType').value,q=Number(document.querySelector('#mQty').value||0);if(q<1)return;
+ const old=p.location||'';let desc='';
+ if(type==='in'){p.qty+=q;desc='Entrada'}else if(type==='out'){if(p.qty<q){alert('Quantidade insuficiente no stock.');return}p.qty-=q;desc='Saída'}else{p.location=document.querySelector('#mTo').value;desc='Transferência'}
+ db.history.unshift({date:new Date().toLocaleString('pt-PT'),type:desc,product:p.name,qty:type==='move'?0:q,from:old,to:p.location});
+ save();renderAll();alert('Movimento registado.');
+}
+document.querySelector('#mType').onchange=()=>document.querySelector('#moveToWrap').classList.toggle('hidden',document.querySelector('#mType').value!=='move');
+function renderMovement(){document.querySelector('#mProd').innerHTML=db.products.map(p=>`<option value="${p.id}">${esc(p.name)} — ${p.qty} cx — ${esc(p.location||'sem local')}</option>`).join('');document.querySelector('#history').innerHTML=db.history.slice(0,30).map(h=>`<div class="item"><b>${esc(h.type)}</b> · ${esc(h.product)}<div class="muted">${h.date} · ${h.qty?h.qty+' cx · ':''}${h.from?'de '+h.from+' ':''}${h.to?'→ '+h.to:''}</div></div>`).join('')||'<div class="empty">Sem movimentos.</div>'}
+function showLocation(id){const ps=db.products.filter(p=>p.location===id);alert(id+'\n\n'+(ps.length?ps.map(p=>p.name+' — '+p.qty+' caixa(s)').join('\n'):'Local vazio.'));}
+function renderMap(){const areas=[['#mapC1E','C1','E','Corredor 1 · Esquerda',14],['#mapC1D','C1','D','Corredor 1 · Direita',22],['#mapC2E','C2','E','Corredor 2 · Esquerda',14],['#mapC2D','C2','D','Corredor 2 · Direita',14],['#mapF','F','F','Fundo do corredor',6]];for(const [sel,c,side,title,count] of areas){const el=document.querySelector(sel);if(!el)continue;let rows='';for(let n=1;n<=6;n++){let slots='';for(let p=1;p<=count;p++){const id=c==='F'?`F-N${String(n).padStart(2,'0')}-P${String(p).padStart(2,'0')}`:`${c}-${side}-N${String(n).padStart(2,'0')}-P${String(p).padStart(2,'0')}`;const filled=db.products.some(x=>x.location===id&&x.qty>0);slots+=`<button class="slot ${filled?'filled':''}" title="${id}" onclick="showLocation('${id}')">${p}</button>`}rows+=`<div class="maprow"><b>N${String(n).padStart(2,'0')}</b><div class="slots">${slots}</div></div>`}el.innerHTML=`<div class="maparea"><h3>${title}</h3><div class="muted">6 níveis · ${count} posições por nível</div>${rows}</div>`}}
+function rebuildLocations(){db.settings={levels:6,layouts:{'C1-E':14,'C1-D':22,'C2-E':14,'C2-D':14,'F':6}};db.locations=buildLocs();save();populateLocs();renderAll();alert('Mapa atualizado: 420 posições.')}
+function renderAll(){renderHome();renderProducts();renderMovement();renderMap()}
+function exportData(){const a=document.createElement('a');a.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(db));a.download='backup-stock-tintas.json';a.click()}
+function importData(){const i=document.createElement('input');i.type='file';i.accept='.json';i.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{db=JSON.parse(r.result);save();populateLocs();renderAll();alert('Backup importado.')}catch{alert('Backup inválido.')}};r.readAsText(f)};i.click()}
+function resetAll(){if(confirm('Apagar todos os produtos e movimentos?')){db.products=[];db.history=[];save();renderAll()}}
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+nav();populateLocs();renderAll();
+</script>
+</body></html>
